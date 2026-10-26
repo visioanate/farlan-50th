@@ -140,6 +140,12 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
 .linkbox{margin-top:8px; border:2px solid var(--ink); background:var(--paper-deep); padding:8px 10px}
 .linkbox .lbl{font-family:var(--body); font-weight:500; font-size:10px; letter-spacing:.2em; text-transform:uppercase; opacity:.8}
 .linkbox .url{font-family:var(--body); font-weight:600; font-size:13px; overflow-wrap:anywhere; user-select:all; -webkit-user-select:all; margin-top:2px}
+.dietbox{margin-top:8px; border:2px solid var(--ink); padding:8px 10px; background:var(--cream)}
+.dietbox .lbl{font-family:var(--body); font-weight:500; font-size:10px; letter-spacing:.2em; text-transform:uppercase; opacity:.8}
+.dietbox .dietnote{font-family:var(--body); font-weight:600; font-size:15px; margin:2px 0 6px}
+.dietbox .dietrow{display:flex; gap:8px; margin-top:4px}
+.dietbox .dietrow input{flex:1; min-width:0; font-size:15px; padding:9px 10px}
+.dietbox .dietrow .btn{min-height:40px; padding:8px 14px; font-size:14px}
 .actions{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px}
 .actions .btn{font-size:15px; min-height:46px; letter-spacing:.08em; padding:10px 6px}
 .actions .wide{grid-column:1 / -1}
@@ -187,9 +193,11 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
       <p class="ask">GET YOUR NAME ON THE GUEST LIST</p>
       <label class="sr" for="name">Your name</label>
       <input type="text" id="name" name="name" placeholder="Your name" autocomplete="name" maxlength="120" required>
+      <label class="sr" for="diet">Allergies or dietary requirements (optional)</label>
+      <input type="text" id="diet" name="diet" placeholder="Allergies or dietary needs (optional)" maxlength="200">
       <div class="choices">
-        <a class="btn yes" id="yes" href="https://hfdcxwchrdbomcmyrynz.supabase.co/functions/v1/rsvp/go?a=yes" target="_blank" rel="noopener">I'M IN</a>
-        <a class="btn no" id="no" href="https://hfdcxwchrdbomcmyrynz.supabase.co/functions/v1/rsvp/go?a=no" target="_blank" rel="noopener">CAN'T MAKE IT</a>
+        <a class="btn yes" id="yes" href="https://hfdcxwchrdbomcmyrynz.supabase.co/functions/v1/rsvp/go?a=yes">I'M IN</a>
+        <a class="btn no" id="no" href="https://hfdcxwchrdbomcmyrynz.supabase.co/functions/v1/rsvp/go?a=no">CAN'T MAKE IT</a>
       </div>
       <div class="err" id="err" role="alert" hidden></div>
       <p class="small">RSVP by 6 November. Your tour pass appears here as soon as you're in.</p>
@@ -213,6 +221,15 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
       <div class="linkbox">
         <div class="lbl">Your pass link (works on any phone, any time)</div>
         <div class="url" id="passlink"></div>
+      </div>
+      <div class="dietbox">
+        <div class="lbl" id="dietlbl">Allergies or dietary needs</div>
+        <div class="dietnote" id="dietnote" hidden></div>
+        <div class="dietrow">
+          <input type="text" id="diet2" placeholder="e.g. nut allergy, vegetarian" maxlength="200">
+          <a class="btn ghost" id="dietsend" href="#">SEND</a>
+        </div>
+        <div class="hint" style="margin-top:6px">Leave empty if there is nothing to note.</div>
       </div>
       <div class="actions">
         <button class="btn ghost wide" id="copylink" type="button">COPY YOUR PASS LINK</button>
@@ -293,19 +310,33 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
   function remembered(){ try{ return JSON.parse(localStorage.getItem('rsvp')||'null'); }catch(_){ return null; } }
   function remember(v){ try{ localStorage.setItem('rsvp', JSON.stringify(v)); }catch(_){} }
 
+  var dietEl=document.getElementById('diet'), diet2=document.getElementById('diet2'), dietSend=document.getElementById('dietsend');
   function hrefs(){
     var n=encodeURIComponent(nameEl.value.trim());
-    yes.href=GO+'?a=yes&name='+n;
+    var d=dietEl.value.trim()?'&d='+encodeURIComponent(dietEl.value.trim()):'';
+    yes.href=GO+'?a=yes&name='+n+d;
     no.href=GO+'?a=no&name='+n;
   }
   nameEl.addEventListener('input', hrefs);
+  dietEl.addEventListener('input', hrefs);
+  // From the pass: add or change allergies without redoing the RSVP (records a fresh "yes" with the note)
+  dietSend.addEventListener('click', function(e){
+    e.preventDefault();
+    var n=document.getElementById('holder').textContent||'';
+    var d=diet2.value.trim();
+    if(!n){ return; }
+    location.href=GO+'?a=yes&name='+encodeURIComponent(n)+(d?'&d='+encodeURIComponent(d):'');
+  });
 
   function passNumber(name){
     var h=0; for(var i=0;i<name.length;i++){ h=(h*31+name.charCodeAt(i))>>>0; }
     return 'No. 1976-'+String(h%9000+1000);
   }
-  function showPass(name){
+  function showPass(name, diet){
     name=name||'Guest';
+    var note=document.getElementById('dietnote');
+    if(diet){ note.textContent='Noted: '+diet; note.hidden=false; diet2.value=diet; diet2.placeholder='Change it'; }
+    else { note.hidden=true; }
     form.hidden=true; doneNo.hidden=true; pass.hidden=false;
     document.getElementById('holder').textContent=name;
     document.getElementById('num').textContent=passNumber(name);
@@ -336,8 +367,7 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
       }
       err.hidden=true;
       hrefs();
-      remember({name:name, choice:choice});
-      setTimeout(function(){ choice==='yes' ? showPass(name) : showNo(name); }, 250);
+      remember({name:name, choice:choice, diet:dietEl.value.trim()});
     };
   }
   yes.addEventListener('click', go('yes'));
@@ -436,14 +466,18 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
   var prev=remembered();
   var h=(location.hash||'').replace('#','');
   if(prev&&prev.name){ nameEl.value=prev.name; hrefs(); }
-  if(h.indexOf('t-')===0 && decName(h.slice(2))){
-    var tagged=decName(h.slice(2));
-    nameEl.value=tagged; hrefs(); remember({name:tagged, choice:'yes'});
-    showPass(tagged);
+  if(h.indexOf('t-')===0){
+    var parts=h.slice(2).split('.');
+    var tagged=decName(parts[0]), tdiet=parts[1]?decName(parts[1]):'';
+    if(tagged){
+      nameEl.value=tagged; if(tdiet) dietEl.value=tdiet; hrefs();
+      remember({name:tagged, choice:'yes', diet:tdiet||(prev&&prev.diet)||''});
+      showPass(tagged, tdiet||(prev&&prev.name===tagged&&prev.diet)||'');
+    }
   }
   else if(h==='yes'){ showPass(prev&&prev.name); }
   else if(h==='no'){ showNo(prev&&prev.name); }
-  else if(prev&&prev.choice==='yes'){ showPass(prev.name); }
+  else if(prev&&prev.choice==='yes'){ if(prev.diet) dietEl.value=prev.diet; showPass(prev.name, prev.diet||''); }
   else if(prev&&prev.choice==='no'){ showNo(prev.name); }
 })();
 </script>
