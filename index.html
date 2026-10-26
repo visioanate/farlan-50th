@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Farlan - The 50th Anniversary Tour</title>
+<meta name="description" content="One night only. Saturday 21 November 2026, Parkhuis Amersfoort. RSVP here.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Farlan - The 50th Anniversary Tour">
+<meta property="og:description" content="One night only. Saturday 21 November 2026, Parkhuis Amersfoort, doors 7:30 PM. Tap to RSVP and get your tour pass.">
+<meta property="og:image" content="https://visioanate.github.io/farlan-50th/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://visioanate.github.io/farlan-50th/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#132038">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23132038'/><text x='50' y='72' font-size='64' text-anchor='middle' fill='%23D9582B' font-family='Impact,sans-serif'>50</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Anton&family=Oswald:wght@400;500;600&display=swap">
+<style>
+/* Layout: full-bleed stage video under a single cream poster panel, framed like the save-the-date.
+   After "I'm in" the panel's lower half becomes the guest's tour pass.
+   One committed look (screen-printed gig poster): same palette in light and dark. */
+:root{
+  --paper:#EFE2C4; --paper-deep:#E3CFA5; --ink:#1C2B45; --ink-deep:#132038;
+  --orange:#D9582B; --orange-deep:#B4421C; --cream:#F6ECD4; --muted:#7a7366;
+  --display:'Alfa Slab One', 'Rockwell Extra Bold', Rockwell, Georgia, serif;
+  --head:'Anton', Impact, 'Arial Narrow Bold', 'Helvetica Neue', sans-serif;
+  --body:'Oswald', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{
+  background:var(--ink-deep); color:var(--ink); font-family:var(--body); font-size:16px; line-height:1.35;
+  min-height:100%; margin:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  padding-block:20px 24px;
+  padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));
+  overflow-x:hidden;
+}
+/* Stage */
+.stage{position:fixed; inset:0; z-index:0; overflow:hidden; background:var(--ink-deep) url("poster.jpg") center 35%/cover no-repeat}
+.stage video{
+  position:absolute; inset:0; width:100%; height:100%; max-width:none; object-fit:cover; object-position:50% 35%;
+  filter:saturate(.8) contrast(1.05); opacity:0; transition:opacity .9s ease;
+}
+.stage video.on{opacity:1}
+.stage .tint{position:absolute; inset:0; background:
+  radial-gradient(120% 90% at 50% 20%, rgba(217,88,43,.22), transparent 60%),
+  linear-gradient(180deg, rgba(19,32,56,.25) 0%, rgba(19,32,56,.4) 60%, rgba(19,32,56,.7) 100%);}
+.stage .dots{position:absolute; inset:0; opacity:.2; mix-blend-mode:multiply;
+  background-image:radial-gradient(rgba(19,32,56,.9) 1px, transparent 1.3px); background-size:4px 4px;}
+/* Poster panel */
+.poster{
+  position:relative; z-index:1; width:100%; max-width:430px;
+  background:var(--paper); color:var(--ink);
+  border:3px solid var(--ink); box-shadow:0 0 0 3px var(--paper), 0 0 0 6px var(--orange), 0 28px 60px rgba(0,0,0,.55);
+  margin:clamp(24px, 16vh, 150px) auto 24px; /* let the stage show above the poster on first view */
+  container-type:inline-size; /* type sizes below scale with the poster, not the window */
+}
+.poster::before{ /* paper grain */
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.55; mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 .22 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+}
+.inner{position:relative; padding:22px 18px 18px; display:flex; flex-direction:column; gap:10px; text-align:center}
+.name{
+  font-family:var(--display); font-weight:400; color:var(--orange); line-height:.9; margin:0;
+  font-size:clamp(40px, 19cqw, 84px); letter-spacing:0; white-space:nowrap;
+  text-shadow:3px 3px 0 var(--ink), 4px 4px 0 var(--ink);
+}
+.tour{font-family:var(--head); font-size:clamp(18px, 6.2cqw, 27px); letter-spacing:.06em; color:var(--ink); margin:0; line-height:1}
+.ribbon{
+  align-self:center; background:var(--orange); color:var(--cream); font-family:var(--head);
+  font-size:18px; letter-spacing:.14em; padding:6px 26px; margin-top:2px;
+  clip-path:polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%, 4% 50%);
+}
+.route{font-family:var(--body); font-weight:500; font-size:12px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink); opacity:.8; margin:4px 0 0}
+.band{
+  background:var(--ink); color:var(--cream); margin:8px -18px 0; padding:14px 18px 16px;
+  display:flex; flex-direction:column; gap:3px; border-top:3px solid var(--ink);
+}
+.band .eyebrow{font-family:var(--head); font-size:16px; letter-spacing:.14em; color:var(--cream)}
+.band .date{font-family:var(--head); font-size:clamp(22px, 7.6cqw, 33px); color:var(--orange); letter-spacing:.03em; line-height:1}
+.band .line{font-family:var(--head); font-size:16px; letter-spacing:.1em}
+.band .venue{font-family:var(--body); font-weight:500; font-size:13px; letter-spacing:.12em; text-transform:uppercase; margin-top:2px}
+.band .venue small{display:block; font-size:12px; letter-spacing:.1em; opacity:.85; margin-top:2px; text-transform:none}
+/* Form */
+.form{display:flex; flex-direction:column; gap:10px; margin-top:4px; text-align:left}
+.ask{font-family:var(--head); font-size:19px; letter-spacing:.1em; text-align:center; color:var(--ink); margin:8px 0 0}
+label.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0)}
+input[type=text]{
+  width:100%; font:600 18px/1.2 var(--body); letter-spacing:.03em; color:var(--ink);
+  background:var(--cream); border:2px solid var(--ink); border-radius:0; padding:12px 14px; outline:none;
+}
+input[type=text]::placeholder{color:var(--muted); font-weight:400}
+input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
+.choices{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.btn{
+  display:flex; align-items:center; justify-content:center; text-decoration:none; cursor:pointer; text-align:center;
+  font-family:var(--head); font-size:18px; letter-spacing:.06em; color:var(--ink); background:transparent;
+  padding:12px 8px; border:3px solid var(--ink); line-height:1.05; min-height:54px;
+  transition:transform .08s ease, background .15s ease, color .15s ease; user-select:none;
+}
+.btn:active{transform:translate(2px,2px)}
+.btn:focus-visible{outline:3px solid var(--orange); outline-offset:2px}
+.btn.yes{background:var(--orange); color:var(--cream); box-shadow:4px 4px 0 var(--ink)}
+.btn.yes:hover{background:var(--orange-deep)}
+.btn.no:hover,.btn.ghost:hover{background:var(--ink); color:var(--cream)}
+.btn.ghost{font-size:15px; min-height:46px; letter-spacing:.08em}
+.small{font-size:13px; letter-spacing:.04em; text-align:center; color:var(--ink); opacity:.85; margin:2px 0 0}
+.err{background:var(--orange); color:var(--cream); font-weight:500; padding:8px 12px; text-align:center}
+/* Tour pass */
+.pass{margin:6px -6px 0; text-align:left; display:flex; flex-direction:column}
+.pass .top{
+  background:var(--ink); color:var(--cream); padding:10px 14px; display:flex; justify-content:space-between; align-items:baseline;
+  font-family:var(--head); letter-spacing:.14em; font-size:14px;
+}
+.pass .top b{color:var(--orange); font-weight:400}
+.pass .card{
+  background:var(--cream); border:3px solid var(--ink); border-top:0; padding:14px 14px 12px; display:flex; flex-direction:column; gap:10px;
+  background-image:repeating-linear-gradient(135deg, transparent 0 18px, rgba(28,43,69,.045) 18px 20px);
+}
+.pass .holder{font-family:var(--head); font-size:clamp(26px, 9cqw, 38px); line-height:1; color:var(--orange); letter-spacing:.02em; overflow-wrap:anywhere}
+.pass .holder small{display:block; font-family:var(--body); font-weight:500; font-size:11px; letter-spacing:.24em; color:var(--ink); text-transform:uppercase; margin-bottom:4px}
+.pass .headline{font-family:var(--head); font-size:15px; letter-spacing:.1em; line-height:1.15}
+.pass .grid{display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; border-top:2px dashed var(--ink); border-bottom:2px dashed var(--ink); padding:10px 0}
+.pass .grid div{min-width:0}
+.pass .grid dt{font-family:var(--body); font-weight:500; font-size:10px; letter-spacing:.22em; text-transform:uppercase; color:var(--ink); opacity:.75; margin:0}
+.pass .grid dd{margin:2px 0 0; font-family:var(--head); font-size:16px; letter-spacing:.04em; line-height:1.1}
+.pass .grid dd.addr{font-family:var(--body); font-weight:600; font-size:14px; letter-spacing:.02em; line-height:1.25}
+.pass .grid .wide{grid-column:1 / -1}
+.pass .bottom{display:flex; justify-content:space-between; align-items:center; gap:10px}
+.pass .bars{flex:1; height:34px; background:repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 7px, transparent 7px 9px, var(--ink) 9px 10px, transparent 10px 14px, var(--ink) 14px 16px, transparent 16px 18px)}
+.pass .num{font-family:var(--head); font-size:15px; letter-spacing:.14em; white-space:nowrap}
+.pass .note{font-size:13px; text-align:center; margin:0}
+.pass .note b{font-weight:600}
+.linkbox{margin-top:8px; border:2px solid var(--ink); background:var(--paper-deep); padding:8px 10px}
+.linkbox .lbl{font-family:var(--body); font-weight:500; font-size:10px; letter-spacing:.2em; text-transform:uppercase; opacity:.8}
+.linkbox .url{font-family:var(--body); font-weight:600; font-size:13px; overflow-wrap:anywhere; user-select:all; -webkit-user-select:all; margin-top:2px}
+.actions{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px}
+.actions .btn{font-size:15px; min-height:46px; letter-spacing:.08em; padding:10px 6px}
+.actions .wide{grid-column:1 / -1}
+.hint{font-size:12.5px; text-align:center; color:var(--ink); opacity:.8; margin:0}
+/* Decline state */
+.done{display:flex; flex-direction:column; gap:8px; text-align:center; margin-top:8px;
+  border:2px dashed var(--ink); padding:18px 14px 16px; background:var(--cream)}
+.done .stamp{font-family:var(--head); font-size:clamp(22px, 7cqw, 30px); letter-spacing:.08em; color:var(--orange); line-height:1}
+.done .who{font-family:var(--body); font-weight:600; font-size:20px; letter-spacing:.04em}
+.done p{margin:0; font-size:15px}
+.again{font-size:13px; color:var(--ink); opacity:.8; text-align:center; margin:4px 0 0}
+.again a{color:var(--ink)}
+.foot{font-family:var(--body); font-size:11px; letter-spacing:.2em; text-transform:uppercase; opacity:.6; margin-top:6px}
+.toast{position:fixed; left:50%; bottom:max(18px, env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:5;
+  background:var(--ink); color:var(--cream); font-family:var(--body); font-weight:500; font-size:14px; letter-spacing:.04em;
+  padding:10px 16px; border:2px solid var(--orange); max-width:calc(100% - 32px); text-align:center}
+@media (prefers-reduced-motion: reduce){ .stage video{transition:none} }
+@media (max-width:360px){ .inner{padding:18px 14px 16px} .band{margin:8px -14px 0} .pass{margin:6px -4px 0} }
+</style>
+</head>
+<body>
+
+<div class="stage" aria-hidden="true">
+  <video id="vA" muted playsinline preload="auto" src="loop.mp4"></video>
+  <video id="vB" muted playsinline preload="auto" src="loop.mp4"></video>
+  <div class="tint"></div>
+  <div class="dots"></div>
+</div>
+
+<main class="poster">
+  <div class="inner">
+    <h1 class="name">FARLAN</h1>
+    <p class="tour">THE 50TH ANNIVERSARY TOUR</p>
+    <div class="ribbon">ONE NIGHT ONLY</div>
+    <p class="route">World tour 1976 &ndash; 2026 &middot; Perth &rarr; Amersfoort</p>
+
+    <div class="band">
+      <div class="eyebrow">50TH BIRTHDAY PARTY</div>
+      <div class="date">SATURDAY 21 NOVEMBER 2026</div>
+      <div class="line">DOORS 7:30 PM &middot; CURFEW MIDNIGHT</div>
+      <div class="venue">Parkhuis &middot; Panoramadak<small>Heiligenbergerweg 151, 3816 AJ Amersfoort</small></div>
+    </div>
+
+    <div class="form" id="form">
+      <p class="ask">GET YOUR NAME ON THE GUEST LIST</p>
+      <label class="sr" for="name">Your name</label>
+      <input type="text" id="name" name="name" placeholder="Your name" autocomplete="name" maxlength="120" required>
+      <div class="choices">
+        <a class="btn yes" id="yes" href="https://hfdcxwchrdbomcmyrynz.supabase.co/functions/v1/rsvp/go?a=yes" target="_blank" rel="noopener">I'M IN</a>
+        <a class="btn no" id="no" href="https://hfdcxwchrdbomcmyrynz.supabase.co/functions/v1/rsvp/go?a=no" target="_blank" rel="noopener">CAN'T MAKE IT</a>
+      </div>
+      <div class="err" id="err" role="alert" hidden></div>
+      <p class="small">RSVP by 6 November. Your tour pass appears here as soon as you're in.</p>
+    </div>
+
+    <div class="pass" id="pass" hidden>
+      <div class="top"><span>TOUR PASS</span><b>ALL ACCESS</b></div>
+      <div class="card" id="card">
+        <div class="holder"><small>Admit one</small><span id="holder"></span></div>
+        <div class="headline">FARLAN &middot; THE 50TH ANNIVERSARY TOUR<br>ONE NIGHT ONLY</div>
+        <dl class="grid">
+          <div><dt>Date</dt><dd>SAT 21 NOV 2026</dd></div>
+          <div><dt>Doors</dt><dd>7:30 PM</dd></div>
+          <div><dt>Venue</dt><dd>PARKHUIS</dd></div>
+          <div><dt>Stage</dt><dd>PANORAMADAK</dd></div>
+          <div class="wide"><dt>Address</dt><dd class="addr">Heiligenbergerweg 151, 3816 AJ Amersfoort</dd></div>
+        </dl>
+        <div class="bottom"><div class="bars"></div><div class="num" id="num"></div></div>
+        <p class="note">Show this at the door and the crew will hand you your <b>lanyard</b>.</p>
+      </div>
+      <div class="linkbox">
+        <div class="lbl">Your pass link (works on any phone, any time)</div>
+        <div class="url" id="passlink"></div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost wide" id="copylink" type="button">COPY YOUR PASS LINK</button>
+        <button class="btn ghost wide" id="save" type="button" hidden>SAVE PASS AS IMAGE</button>
+        <a class="btn ghost" id="maps" href="https://www.google.com/maps/search/?api=1&query=Parkhuis%2C%20Heiligenbergerweg%20151%2C%203816%20AJ%20Amersfoort" target="_blank" rel="noopener">OPEN IN MAPS</a>
+        <a class="btn ghost" id="cal" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Farlan%20-%20The%2050th%20Anniversary%20Tour&dates=20261121T183000Z%2F20261121T230000Z&details=One%20night%20only.%20Doors%207%3A30%20PM%2C%20curfew%20midnight.%20Tour%20passes%20at%20the%20door.&location=Parkhuis%20(Panoramadak)%2C%20Heiligenbergerweg%20151%2C%203816%20AJ%20Amersfoort" target="_blank" rel="noopener">ADD TO CALENDAR</a>
+        <button class="btn ghost wide" id="copy" type="button">COPY THE ADDRESS</button>
+      </div>
+      <p class="hint" id="hint">Save the link above and this pass is always one tap away. Or take a screenshot.</p>
+      <p class="again">Plans changed? <a href="#" id="redo-yes">Update your RSVP</a></p>
+    </div>
+
+    <div class="done" id="done-no" hidden>
+      <div class="stamp">WE'LL MISS YOU</div>
+      <div class="who" id="who-no"></div>
+      <p>Thanks for letting me know. Next tour, maybe.</p>
+      <p class="again">Changed your mind? <a href="#" id="redo-no">Update your RSVP</a></p>
+    </div>
+
+    <div class="foot">Tickets &middot; Tour passes at the door</div>
+  </div>
+</main>
+
+<script>
+(function(){
+  var GO='https://hfdcxwchrdbomcmyrynz.supabase.co/functions/v1/rsvp/go';
+  var PAGE='https://visioanate.github.io/farlan-50th/';
+  var ADDRESS='Parkhuis (Panoramadak), Heiligenbergerweg 151, 3816 AJ Amersfoort';
+
+  // Pass links carry the guest's name as a URL-safe tag: PAGE#t-<encoded name>
+  function encName(name){
+    try{ return btoa(unescape(encodeURIComponent(name))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }catch(_){ return ''; }
+  }
+  function decName(tag){
+    try{ var b=tag.replace(/-/g,'+').replace(/_/g,'/'); while(b.length%4) b+='='; return decodeURIComponent(escape(atob(b))); }catch(_){ return ''; }
+  }
+  function passLink(name){ return PAGE+'#t-'+encName(name); }
+
+  // Seamless loop: two copies of the same clip, crossfaded before each one ends.
+  var A=document.getElementById('vA'), B=document.getElementById('vB');
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var LEAD=0.9, started=false;
+  function arm(active, standby){
+    var fired=false;
+    function tick(){
+      if(fired||!active.duration) return;
+      if(active.duration-active.currentTime<=LEAD){
+        fired=true;
+        standby.currentTime=0;
+        var p=standby.play(); if(p&&p.catch) p.catch(function(){});
+        standby.classList.add('on'); active.classList.remove('on');
+        setTimeout(function(){ active.pause(); active.currentTime=0; }, 1000);
+        active.removeEventListener('timeupdate', tick);
+        arm(standby, active);
+      }
+    }
+    active.addEventListener('timeupdate', tick);
+  }
+  function start(){
+    if(reduce){ A.classList.add('on'); A.pause(); return; }
+    var p=A.play();
+    if(p&&p.then){ p.then(function(){ started=true; }).catch(function(){}); } else { started=true; }
+    A.classList.add('on');
+    if(!A.dataset.armed){ A.dataset.armed='1'; arm(A,B); }
+  }
+  if(A.readyState>=2){ start(); } else { A.addEventListener('loadeddata', start, {once:true}); }
+  // Phones in low-power mode or in-app browsers refuse autoplay: start on the first touch instead.
+  function kick(){ if(!started && !reduce && A.paused){ start(); } }
+  document.addEventListener('touchstart', kick, {passive:true});
+  document.addEventListener('pointerdown', kick, {passive:true});
+
+  // RSVP: the buttons are links to the guest-list service. Tapping one records the answer
+  // and brings the guest back here with #yes or #no, so the pass shows.
+  var form=document.getElementById('form'), nameEl=document.getElementById('name'), err=document.getElementById('err');
+  var yes=document.getElementById('yes'), no=document.getElementById('no');
+  var pass=document.getElementById('pass'), doneNo=document.getElementById('done-no');
+
+  function remembered(){ try{ return JSON.parse(localStorage.getItem('rsvp')||'null'); }catch(_){ return null; } }
+  function remember(v){ try{ localStorage.setItem('rsvp', JSON.stringify(v)); }catch(_){} }
+
+  function hrefs(){
+    var n=encodeURIComponent(nameEl.value.trim());
+    yes.href=GO+'?a=yes&name='+n;
+    no.href=GO+'?a=no&name='+n;
+  }
+  nameEl.addEventListener('input', hrefs);
+
+  function passNumber(name){
+    var h=0; for(var i=0;i<name.length;i++){ h=(h*31+name.charCodeAt(i))>>>0; }
+    return 'No. 1976-'+String(h%9000+1000);
+  }
+  function showPass(name){
+    name=name||'Guest';
+    form.hidden=true; doneNo.hidden=true; pass.hidden=false;
+    document.getElementById('holder').textContent=name;
+    document.getElementById('num').textContent=passNumber(name);
+    var link=passLink(name);
+    document.getElementById('passlink').textContent=link;
+    var cal=document.getElementById('cal');
+    cal.href='https://calendar.google.com/calendar/render?action=TEMPLATE'
+      +'&text='+encodeURIComponent('Farlan - The 50th Anniversary Tour')
+      +'&dates=20261121T183000Z%2F20261121T230000Z'
+      +'&details='+encodeURIComponent('One night only. Doors 7:30 PM, curfew midnight. Your tour pass: '+link)
+      +'&location='+encodeURIComponent(ADDRESS);
+  }
+  function showNo(name){
+    form.hidden=true; pass.hidden=true; doneNo.hidden=false;
+    document.getElementById('who-no').textContent=name||'';
+  }
+  function showForm(){
+    form.hidden=false; pass.hidden=true; doneNo.hidden=true;
+    err.hidden=true; nameEl.focus();
+  }
+  function go(choice){
+    return function(e){
+      var name=nameEl.value.trim();
+      if(!name){
+        e.preventDefault();
+        err.textContent='Put your name in first so I know who is coming.'; err.hidden=false;
+        nameEl.focus(); return;
+      }
+      err.hidden=true;
+      hrefs();
+      remember({name:name, choice:choice});
+      setTimeout(function(){ choice==='yes' ? showPass(name) : showNo(name); }, 250);
+    };
+  }
+  yes.addEventListener('click', go('yes'));
+  no.addEventListener('click', go('no'));
+  document.getElementById('redo-yes').addEventListener('click', function(e){ e.preventDefault(); showForm(); });
+  document.getElementById('redo-no').addEventListener('click', function(e){ e.preventDefault(); showForm(); });
+
+  // Toast
+  var toastEl=null, toastT=null;
+  function toast(msg){
+    if(!toastEl){ toastEl=document.createElement('div'); toastEl.className='toast'; document.body.appendChild(toastEl); }
+    toastEl.textContent=msg; toastEl.hidden=false;
+    clearTimeout(toastT); toastT=setTimeout(function(){ toastEl.hidden=true; }, 2600);
+  }
+
+  // Copy buttons (clipboard where allowed, otherwise select the text for the viewer)
+  function copier(getText, selector, okMsg, failMsg){
+    return function(){
+      var done=function(){ toast(okMsg); };
+      var fail=function(){
+        var r=document.createRange(); r.selectNodeContents(document.querySelector(selector));
+        var s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        toast(failMsg);
+      };
+      if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(getText()).then(done, fail); } else { fail(); }
+    };
+  }
+  document.getElementById('copy').addEventListener('click', copier(function(){ return ADDRESS; }, '.pass .addr', 'Address copied', 'Select and copy the address above'));
+  document.getElementById('copylink').addEventListener('click', copier(function(){ return document.getElementById('passlink').textContent; }, '#passlink', 'Pass link copied', 'Select and copy the link above'));
+
+  // Save the pass as an image (only where the viewer allows saves)
+  var saveBtn=document.getElementById('save'), hint=document.getElementById('hint');
+  function drawPass(name){
+    var W=1080, H=1500, c=document.createElement('canvas'); c.width=W; c.height=H;
+    var x=c.getContext('2d');
+    var ink='#1C2B45', orange='#D9582B', cream='#F6ECD4', paper='#EFE2C4';
+    x.fillStyle=paper; x.fillRect(0,0,W,H);
+    // frame
+    x.fillStyle=orange; x.fillRect(0,0,W,H); x.fillStyle=paper; x.fillRect(14,14,W-28,H-28);
+    x.fillStyle=ink; x.fillRect(28,28,W-56,H-56); x.fillStyle=cream; x.fillRect(36,36,W-72,H-72);
+    // top band
+    x.fillStyle=ink; x.fillRect(36,36,W-72,110);
+    x.fillStyle=cream; x.font='48px Anton, Impact, sans-serif'; x.textBaseline='middle';
+    x.fillText('TOUR PASS', 70, 92);
+    x.fillStyle=orange; x.textAlign='right'; x.fillText('ALL ACCESS', W-70, 92); x.textAlign='left';
+    // name block
+    x.fillStyle=ink; x.font='500 26px Oswald, Arial Narrow, sans-serif'; x.fillText('ADMIT ONE', 70, 210);
+    x.fillStyle=orange; var size=120; x.font=size+'px Anton, Impact, sans-serif';
+    while(x.measureText(name).width>W-140 && size>40){ size-=6; x.font=size+'px Anton, Impact, sans-serif'; }
+    x.fillText(name, 70, 300);
+    // headline
+    x.fillStyle=orange; x.font='150px "Alfa Slab One", Rockwell, serif'; x.fillText('FARLAN', 70, 480);
+    x.fillStyle=ink; x.font='52px Anton, Impact, sans-serif'; x.fillText('THE 50TH ANNIVERSARY TOUR', 70, 590);
+    x.font='36px Anton, Impact, sans-serif'; x.fillText('ONE NIGHT ONLY', 70, 650);
+    // dashed rules
+    x.strokeStyle=ink; x.lineWidth=4; x.setLineDash([16,12]);
+    x.beginPath(); x.moveTo(70,720); x.lineTo(W-70,720); x.stroke();
+    x.beginPath(); x.moveTo(70,1136); x.lineTo(W-70,1136); x.stroke(); x.setLineDash([]);
+    function cell(label, value, cx, cy, big){
+      x.fillStyle=ink; x.font='500 24px Oswald, Arial Narrow, sans-serif'; x.fillText(label, cx, cy);
+      x.font=(big?'56px':'46px')+' Anton, Impact, sans-serif'; x.fillText(value, cx, cy+62);
+    }
+    cell('DATE','SAT 21 NOV 2026',70,790,true);
+    cell('DOORS','7:30 PM',600,790,true);
+    cell('VENUE','PARKHUIS',70,920,false);
+    cell('STAGE','PANORAMADAK',600,920,false);
+    x.fillStyle=ink; x.font='500 24px Oswald, Arial Narrow, sans-serif'; x.fillText('ADDRESS', 70, 1046);
+    x.font='600 40px Oswald, Arial Narrow, sans-serif'; x.fillText('Heiligenbergerweg 151, 3816 AJ Amersfoort', 70, 1096);
+    // barcode + number
+    var bx=70, by=1180; x.fillStyle=ink;
+    var pat=[2,2,3,2,1,4,2,2,1,3,2,1,3,2,2,1,2,4,1,2];
+    for(var i=0;i<40;i++){ var w=pat[i%pat.length]*2; x.fillRect(bx, by, w, 90); bx+=w+ (pat[(i+3)%pat.length]*2); }
+    x.font='40px Anton, Impact, sans-serif'; x.textAlign='right'; x.fillText(passNumber(name), W-70, 1225); x.textAlign='left';
+    x.fillStyle=ink; x.font='500 30px Oswald, Arial Narrow, sans-serif';
+    x.fillText('Show this at the door and the crew will hand you your lanyard.', 70, 1330);
+    x.font='500 24px Oswald, Arial Narrow, sans-serif'; x.fillStyle=orange;
+    x.fillText('CURFEW MIDNIGHT  ·  WORLD TOUR 1976 – 2026  ·  PERTH → AMERSFOORT', 70, 1400);
+    return new Promise(function(res){ c.toBlob(function(b){ res(b); }, 'image/png'); });
+  }
+  // Save the pass as a PNG (a real download on this site)
+  saveBtn.hidden=false; hint.textContent='Save the link or the image, or just take a screenshot.';
+  saveBtn.addEventListener('click', function(){
+    var name=document.getElementById('holder').textContent||'Guest';
+    saveBtn.disabled=true;
+    var fontsReady=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
+    fontsReady.then(function(){ return drawPass(name); }).then(function(blob){
+      var url=URL.createObjectURL(blob), a=document.createElement('a');
+      a.href=url; a.download='Farlan-50th-tour-pass.png'; document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 2000);
+      toast('Pass saved');
+    }).catch(function(){ toast('Could not save. Take a screenshot instead.'); })
+    .then(function(){ saveBtn.disabled=false; });
+  });
+
+  // Returning from the service (#yes / #no) or reopening after answering
+  var prev=remembered();
+  var h=(location.hash||'').replace('#','');
+  if(prev&&prev.name){ nameEl.value=prev.name; hrefs(); }
+  if(h.indexOf('t-')===0 && decName(h.slice(2))){
+    var tagged=decName(h.slice(2));
+    nameEl.value=tagged; hrefs(); remember({name:tagged, choice:'yes'});
+    showPass(tagged);
+  }
+  else if(h==='yes'){ showPass(prev&&prev.name); }
+  else if(h==='no'){ showNo(prev&&prev.name); }
+  else if(prev&&prev.choice==='yes'){ showPass(prev.name); }
+  else if(prev&&prev.choice==='no'){ showNo(prev.name); }
+})();
+</script>
+
+</body>
+</html>
