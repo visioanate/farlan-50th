@@ -158,6 +158,10 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
 .done p{margin:0; font-size:15px}
 .again{font-size:13px; color:var(--ink); opacity:.8; text-align:center; margin:4px 0 0}
 .again a{color:var(--ink)}
+.onename{font-size:13px; text-align:center; color:var(--ink); opacity:.85; margin:-2px 0 0}
+.guestfor{background:var(--orange); color:var(--cream); font-weight:500; font-size:14px; padding:8px 12px; text-align:center; margin-bottom:6px}
+.guestfor a{color:var(--cream)}
+.addguest{margin-top:8px}
 .foot{font-family:var(--body); font-size:11px; letter-spacing:.2em; text-transform:uppercase; opacity:.6; margin-top:6px}
 .toast{position:fixed; left:50%; bottom:max(18px, env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:5;
   background:var(--ink); color:var(--cream); font-family:var(--body); font-weight:500; font-size:14px; letter-spacing:.04em;
@@ -190,9 +194,10 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
     </div>
 
     <div class="form" id="form">
-      <p class="ask">GET YOUR NAME ON THE GUEST LIST</p>
+      <p class="ask" id="ask">GET YOUR NAME ON THE GUEST LIST</p>
       <label class="sr" for="name">Your name</label>
-      <input type="text" id="name" name="name" placeholder="Your name" autocomplete="name" maxlength="120" required>
+      <input type="text" id="name" name="name" placeholder="Your name (just you)" autocomplete="name" maxlength="120" required>
+      <p class="onename" id="onename">One name per RSVP. Bringing a partner? You can add them on the next screen.</p>
       <label class="sr" for="diet">Allergies or dietary requirements (optional)</label>
       <input type="text" id="diet" name="diet" placeholder="Allergies, vegetarian, vegan... (optional)" maxlength="200">
       <div class="choices">
@@ -201,9 +206,11 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
       </div>
       <div class="err" id="err" role="alert" hidden></div>
       <p class="small">RSVP by 6 November. Your tour pass appears here as soon as you're in.</p>
+      <p class="again" id="cancelguest" hidden><a href="#">Back to my pass</a></p>
     </div>
 
     <div class="pass" id="pass" hidden>
+      <div class="guestfor" id="guestfor" hidden><span id="guestforname"></span> is on the list. Send them the pass link below so it's on their phone. <a href="#" id="backmine">Back to my pass</a></div>
       <div class="top"><span>TOUR PASS</span><b>ALL ACCESS</b></div>
       <div class="card" id="card">
         <div class="holder"><small>Admit one</small><span id="holder"></span></div>
@@ -231,6 +238,7 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
         </div>
         <div class="hint" style="margin-top:6px">Leave empty if there is nothing to note.</div>
       </div>
+      <button class="btn wide addguest" id="addguest" type="button">+ RSVP FOR YOUR PARTNER</button>
       <div class="actions">
         <button class="btn ghost wide" id="copylink" type="button">COPY YOUR PASS LINK</button>
         <button class="btn ghost wide" id="save" type="button" hidden>SAVE PASS AS IMAGE</button>
@@ -246,7 +254,8 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
       <div class="stamp">WE'LL MISS YOU</div>
       <div class="who" id="who-no"></div>
       <p>Thanks for letting me know. Next tour, maybe.</p>
-      <p class="again">Changed your mind? <a href="#" id="redo-no">Update your RSVP</a></p>
+      <p class="again" id="redo-no-p">Changed your mind? <a href="#" id="redo-no">Update your RSVP</a></p>
+      <p class="again" id="backmine2" hidden><a href="#">Back to my pass</a></p>
     </div>
 
     <div class="foot">Tickets &middot; Tour passes at the door</div>
@@ -307,6 +316,10 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
   var yes=document.getElementById('yes'), no=document.getElementById('no');
   var pass=document.getElementById('pass'), doneNo=document.getElementById('done-no');
 
+  // Partner mode: RSVP someone else from this phone without replacing your own pass
+  function other(){ try{ return JSON.parse(localStorage.getItem('rsvpOther')||'null'); }catch(_){ return null; } }
+  function setOther(v){ try{ if(v) localStorage.setItem('rsvpOther', JSON.stringify(v)); else localStorage.removeItem('rsvpOther'); }catch(_){} }
+  var guestMode=false, viewingGuest=false;
   function remembered(){ try{ return JSON.parse(localStorage.getItem('rsvp')||'null'); }catch(_){ return null; } }
   function remember(v){ try{ localStorage.setItem('rsvp', JSON.stringify(v)); }catch(_){} }
 
@@ -325,6 +338,7 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
     var n=document.getElementById('holder').textContent||'';
     var d=diet2.value.trim();
     if(!n){ return; }
+    if(viewingGuest) setOther({name:n});
     location.href=GO+'?a=yes&name='+encodeURIComponent(n)+(d?'&d='+encodeURIComponent(d):'');
   });
 
@@ -332,8 +346,13 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
     var h=0; for(var i=0;i<name.length;i++){ h=(h*31+name.charCodeAt(i))>>>0; }
     return 'No. 1976-'+String(h%9000+1000);
   }
-  function showPass(name, diet){
+  function showPass(name, diet, isGuest){
     name=name||'Guest';
+    viewingGuest=!!isGuest;
+    document.getElementById('guestfor').hidden=!isGuest;
+    document.getElementById('guestforname').textContent=isGuest?name:'';
+    document.getElementById('addguest').hidden=!!isGuest;
+    document.getElementById('redo-yes').parentNode.hidden=!!isGuest;
     var note=document.getElementById('dietnote');
     if(diet){ note.textContent='Noted: '+diet; note.hidden=false; diet2.value=diet; diet2.placeholder='Change it'; }
     else { note.hidden=true; }
@@ -349,7 +368,9 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
       +'&details='+encodeURIComponent('One night only. Doors 7:30 PM, curfew midnight. Your tour pass: '+link)
       +'&location='+encodeURIComponent(ADDRESS);
   }
-  function showNo(name){
+  function showNo(name, isGuest){
+    document.getElementById('redo-no-p').hidden=!!isGuest;
+    document.getElementById('backmine2').hidden=!isGuest;
     form.hidden=true; pass.hidden=true; doneNo.hidden=false;
     document.getElementById('who-no').textContent=name||'';
   }
@@ -367,6 +388,7 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
       }
       err.hidden=true;
       hrefs();
+      if(guestMode){ setOther({name:name, choice:choice}); return; }
       remember({name:name, choice:choice, diet:dietEl.value.trim()});
     };
   }
@@ -374,6 +396,30 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
   no.addEventListener('click', go('no'));
   document.getElementById('redo-yes').addEventListener('click', function(e){ e.preventDefault(); showForm(); });
   document.getElementById('redo-no').addEventListener('click', function(e){ e.preventDefault(); showForm(); });
+  function guestForm(on){
+    guestMode=on;
+    document.getElementById('ask').textContent=on?'WHO ELSE IS COMING?':'GET YOUR NAME ON THE GUEST LIST';
+    nameEl.placeholder=on?'Their name (just them)':'Your name (just you)';
+    document.getElementById('onename').textContent=on?'They get their own tour pass. Your pass stays on this phone.':'One name per RSVP. Bringing a partner? You can add them on the next screen.';
+    document.getElementById('cancelguest').hidden=!on;
+    nameEl.setAttribute('autocomplete', on?'off':'name');
+  }
+  function backToMine(e){
+    if(e) e.preventDefault();
+    guestForm(false); setOther(null);
+    var p=remembered();
+    if(p&&p.name){ nameEl.value=p.name; dietEl.value=p.diet||''; hrefs(); }
+    try{ history.replaceState(null,'',location.pathname); }catch(_){}
+    if(p&&p.choice==='yes') showPass(p.name, p.diet||'');
+    else if(p&&p.choice==='no') showNo(p.name);
+    else showForm();
+  }
+  document.getElementById('addguest').addEventListener('click', function(){
+    guestForm(true); nameEl.value=''; dietEl.value=''; hrefs(); showForm();
+  });
+  document.getElementById('cancelguest').addEventListener('click', backToMine);
+  document.getElementById('backmine').addEventListener('click', backToMine);
+  document.getElementById('backmine2').addEventListener('click', backToMine);
 
   // Toast
   var toastEl=null, toastT=null;
@@ -465,6 +511,16 @@ input[type=text]:focus{box-shadow:0 0 0 3px var(--orange)}
   // Returning from the service (#yes / #no) or reopening after answering
   var prev=remembered();
   var h=(location.hash||'').replace('#','');
+  var pend=other();
+  if(pend&&pend.name&&(h.indexOf('t-')===0||h==='no')){
+    var gname=h==='no'?pend.name:decName(h.slice(2).split('.')[0]);
+    var gdiet=(h.indexOf('t-')===0&&h.slice(2).split('.')[1])?decName(h.slice(2).split('.')[1]):'';
+    setOther(null);
+    try{ history.replaceState(null,'',location.pathname); }catch(_){}
+    if(prev&&prev.name){ nameEl.value=prev.name; dietEl.value=prev.diet||''; hrefs(); }
+    if(h==='no') showNo(gname, true); else showPass(gname, gdiet, true);
+    return;
+  }
   if(prev&&prev.name){ nameEl.value=prev.name; hrefs(); }
   if(h.indexOf('t-')===0){
     var parts=h.slice(2).split('.');
