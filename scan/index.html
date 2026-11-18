@@ -50,13 +50,35 @@ html,body{margin:0; height:100%; background:var(--ink); color:var(--cream); font
 @keyframes sweep{from{top:10%} to{top:90%}}
 body.busy #laser{animation-duration:.22s}
 
-#top{position:fixed; left:0; right:0; top:0; padding:calc(env(safe-area-inset-top) + 14px) 20px 0;
+#top{position:fixed; left:0; right:0; top:0; padding:calc(env(safe-area-inset-top) + 14px) 64px 0;
   text-align:center; pointer-events:none}
-#top .k{font:500 13px/1 var(--body); letter-spacing:.32em; color:var(--orange); text-transform:uppercase}
+#top .k{font:500 12px/1 var(--body); letter-spacing:.18em; white-space:nowrap; color:var(--orange); text-transform:uppercase}
 #top .t{font:28px/1.1 var(--head); letter-spacing:.04em; margin-top:6px; text-transform:uppercase}
-#hint{position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 22px); text-align:center;
+#hint{position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 96px); text-align:center;
   font:500 17px/1.3 var(--body); letter-spacing:.14em; text-transform:uppercase; pointer-events:none; opacity:.9}
-#count{display:block; font:400 13px/1 var(--body); letter-spacing:.2em; opacity:.6; margin-top:8px}
+/* Door count with manual correction */
+#tally{position:fixed; left:50%; transform:translateX(-50%); bottom:calc(env(safe-area-inset-bottom) + 18px); z-index:4;
+  display:flex; align-items:center; gap:6px; padding:6px; border-radius:999px; background:rgba(11,19,34,.72);
+  border:1px solid rgba(246,236,212,.18); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px)}
+#tally button{appearance:none; border:0; width:52px; height:52px; border-radius:50%; background:rgba(246,236,212,.12);
+  color:var(--cream); font:500 34px/1 var(--body); cursor:pointer; touch-action:manipulation; -webkit-touch-callout:none}
+#tally button:active{background:rgba(246,236,212,.3)}
+#tally .n{min-width:150px; white-space:nowrap; text-align:center; line-height:1}
+#tally .n b{display:block; font:34px/1 var(--head); letter-spacing:.02em}
+#tally .n small{display:block; font:500 11px/1 var(--body); letter-spacing:.22em; text-transform:uppercase; opacity:.65; margin-top:4px}
+#tally.flash .n b{color:var(--orange)}
+#refresh{position:fixed; right:calc(env(safe-area-inset-right) + 12px); top:calc(env(safe-area-inset-top) + 12px); z-index:4;
+  appearance:none; border:0; width:46px; height:46px; border-radius:50%; background:rgba(11,19,34,.6); color:var(--cream);
+  display:flex; align-items:center; justify-content:center; cursor:pointer}
+#refresh svg{width:24px; height:24px}
+#refresh.spin svg{animation:spin .7s linear}
+@keyframes spin{to{transform:rotate(360deg)}}
+#wake{position:fixed; inset:0; z-index:6; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+  padding:32px; text-align:center; background:rgba(19,32,56,.96)}
+#wake .t{font:min(10vw,52px)/1.05 var(--head); text-transform:uppercase}
+#wake p{margin:0; font:400 16px/1.45 var(--body); opacity:.8; max-width:380px}
+#wake button{appearance:none; border:0; border-radius:999px; background:var(--orange); color:#fff;
+  font:22px/1 var(--head); letter-spacing:.08em; text-transform:uppercase; padding:20px 44px; cursor:pointer}
 
 /* Result overlay */
 #result{position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -90,7 +112,18 @@ body.busy #laser{animation-duration:.22s}
 <div id="noise" hidden></div>
 <div id="frame"><i></i><div id="laser"></div></div>
 <div id="top"><div class="k">Door crew &middot; One night only</div><div class="t">The 50th Anniversary Tour</div></div>
-<div id="hint">Hold the tour pass in the frame<span id="count"></span></div>
+<div id="hint">Hold the tour pass in the frame</div>
+<div id="tally" hidden>
+  <button type="button" id="minus" aria-label="One less">&minus;</button>
+  <div class="n"><b id="count">0</b><small>Through the door</small></div>
+  <button type="button" id="plus" aria-label="One more">+</button>
+</div>
+<button type="button" id="refresh" hidden aria-label="Restart camera and sound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+<div id="wake" hidden>
+  <div class="t">Scanner<br>asleep</div>
+  <p>The camera or sound switched off while the screen was away. Your count is kept.</p>
+  <button type="button" id="wakeBtn">Wake it up</button>
+</div>
 
 <div id="result"><svg class="icon" viewBox="0 0 100 100" aria-hidden="true"></svg><div class="big"></div><div class="small"></div></div>
 <div id="deny" aria-hidden="true"></div>
@@ -108,36 +141,68 @@ body.busy #laser{animation-duration:.22s}
   var body=document.body, video=document.getElementById('cam'), noise=document.getElementById('noise');
   var result=document.getElementById('result'), icon=result.querySelector('.icon');
   var big=result.querySelector('.big'), small=result.querySelector('.small');
-  var countEl=document.getElementById('count');
-  var ac=null, busy=false, admitted=0, wakeLock=null, started=false;
+  var countEl=document.getElementById('count'), tally=document.getElementById('tally');
+  var wake=document.getElementById('wake'), refreshBtn=document.getElementById('refresh');
+  var ac=null, stream=null, busy=false, admitted=0, wakeLock=null, started=false;
 
   var OK_LINES=['Enjoy the show','Welcome to the tour','Access all areas','Front row, please','Rock on'];
   var BAD_LINES=['Ticket not recognised','Please try again','Already scanned?','Nice try'];
 
+  // --- Door count (kept on this device, survives sleep and reloads) ---
   try{ admitted=parseInt(localStorage.getItem('door-admitted')||'0',10)||0; }catch(_){}
-  function showCount(){ countEl.textContent=admitted? admitted+' through the door' : ''; }
-  showCount();
-
-  // --- Sound (Web Audio; must be unlocked by the Start tap) ---
-  function tone(freq, start, dur, type, vol){
-    var o=ac.createOscillator(), g=ac.createGain();
-    o.type=type||'square'; o.frequency.value=freq;
-    g.gain.setValueAtTime(0.0001, ac.currentTime+start);
-    g.gain.exponentialRampToValueAtTime(vol||0.35, ac.currentTime+start+0.008);
-    g.gain.setValueAtTime(vol||0.35, ac.currentTime+start+dur-0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+start+dur);
-    o.connect(g); g.connect(ac.destination); o.start(ac.currentTime+start); o.stop(ac.currentTime+start+dur+0.02);
+  function setCount(n){
+    admitted=Math.max(0,n);
+    try{ localStorage.setItem('door-admitted', String(admitted)); }catch(_){}
+    countEl.textContent=admitted;
+    tally.classList.add('flash'); setTimeout(function(){ tally.classList.remove('flash'); }, 250);
   }
-  function beepOk(){ if(!ac) return; tone(1760,0,0.11,'square',0.3); tone(2350,0.13,0.18,'square',0.3); }
-  function beepBad(){ if(!ac) return; for(var i=0;i<3;i++) tone(190,i*0.2,0.15,'sawtooth',0.4); }
+  countEl.textContent=admitted;
 
+  // --- Sound (Web Audio). iOS suspends or kills it in the background, so it is rebuilt on a tap. ---
+  function audioOk(){ return ac && ac.state==='running'; }
+  function startAudio(){
+    try{
+      if(ac && ac.state!=='closed'){ ac.resume && ac.resume(); }
+      if(!ac || ac.state==='closed' || ac.state==='interrupted'){
+        try{ ac && ac.close && ac.close(); }catch(_){}
+        ac=new (window.AudioContext||window.webkitAudioContext)(); ac.resume && ac.resume();
+      }
+      tone(1,0,0.02,'sine',0.0002);   // silent blip unlocks output on iOS
+    }catch(_){ ac=null; }
+  }
+  function tone(freq, start, dur, type, vol){
+    if(!ac) return;
+    var o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime;
+    o.type=type||'square'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001, t+start);
+    g.gain.exponentialRampToValueAtTime(vol||0.35, t+start+0.008);
+    g.gain.setValueAtTime(vol||0.35, t+start+dur-0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+start+dur);
+    o.connect(g); g.connect(ac.destination); o.start(t+start); o.stop(t+start+dur+0.02);
+  }
+  function beepOk(){ tone(1760,0,0.11,'square',0.3); tone(2350,0.13,0.18,'square',0.3); }
+  function beepBad(){ for(var i=0;i<3;i++) tone(190,i*0.2,0.15,'sawtooth',0.4); }
   function vibrate(p){ try{ navigator.vibrate&&navigator.vibrate(p); }catch(_){} }
 
   // --- Camera ---
+  function cameraOk(){
+    if(!stream) return !noise.hidden; // no camera available at all: backdrop mode counts as fine
+    var t=stream.getVideoTracks()[0];
+    return t && t.readyState==='live' && !t.muted && !video.paused;
+  }
+  function stopCamera(){
+    if(stream){ stream.getTracks().forEach(function(t){ try{ t.stop(); }catch(_){} }); }
+    stream=null; video.srcObject=null;
+  }
   function startCamera(){
+    stopCamera();
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ noise.hidden=false; return Promise.resolve(); }
     return navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false})
-      .then(function(s){ video.srcObject=s; return video.play().catch(function(){}); })
+      .then(function(s){
+        stream=s; noise.hidden=true; video.srcObject=s;
+        s.getVideoTracks().forEach(function(t){ t.addEventListener('ended', checkHealth); });
+        return video.play().catch(function(){});
+      })
       .catch(function(){ noise.hidden=false; });
   }
   function keepAwake(){
@@ -145,17 +210,46 @@ body.busy #laser{animation-duration:.22s}
       navigator.wakeLock.request('screen').then(function(l){ wakeLock=l; }).catch(function(){});
     } }catch(_){}
   }
+
+  // Restart everything from a tap (iOS only allows camera + sound to restart from a user gesture)
+  function restart(){
+    refreshBtn.classList.remove('spin'); void refreshBtn.offsetWidth; refreshBtn.classList.add('spin');
+    startAudio(); keepAwake();
+    return startCamera().then(function(){ wake.hidden=true; });
+  }
+
+  // Watch for the camera or sound going cold
+  function checkHealth(){
+    if(!started || document.visibilityState!=='visible') return;
+    if(!cameraOk() || !audioOk()){
+      if(video.srcObject && video.paused) video.play().catch(function(){});
+      if(ac && ac.state==='suspended') ac.resume && ac.resume();
+      setTimeout(function(){ if(started && (!cameraOk() || !audioOk())) wake.hidden=false; }, 400);
+    }
+  }
   document.addEventListener('visibilitychange', function(){
-    if(document.visibilityState==='visible'&&started){ keepAwake();
-      if(video.srcObject&&video.paused) video.play().catch(function(){}); }
+    if(document.visibilityState==='visible'){ keepAwake(); setTimeout(checkHealth, 300); }
   });
+  window.addEventListener('pageshow', function(){ setTimeout(checkHealth, 300); });
+  window.addEventListener('focus', function(){ setTimeout(checkHealth, 300); });
+  setInterval(checkHealth, 3000);
 
   document.getElementById('go').addEventListener('click', function(){
-    try{ ac=new (window.AudioContext||window.webkitAudioContext)(); ac.resume&&ac.resume();
-      tone(1,0,0.02,'sine',0.0002); }catch(_){ ac=null; }
-    var s=document.getElementById('start'); s.parentNode.removeChild(s); started=true;
-    startCamera(); keepAwake();
+    var s=document.getElementById('start'); s.parentNode.removeChild(s);
+    started=true; tally.hidden=false; refreshBtn.hidden=false;
+    restart();
   });
+  document.getElementById('wakeBtn').addEventListener('click', function(e){ e.stopPropagation(); restart(); });
+  refreshBtn.addEventListener('click', function(e){ e.stopPropagation(); restart(); });
+
+  // --- Count correction: - and +, hold - for 2 seconds to reset to zero ---
+  var holdT=null, held=false;
+  document.getElementById('plus').addEventListener('click', function(e){ e.stopPropagation(); setCount(admitted+1); });
+  var minus=document.getElementById('minus');
+  minus.addEventListener('pointerdown', function(){ held=false; holdT=setTimeout(function(){ held=true; setCount(0); vibrate(60); }, 2000); });
+  ['pointerup','pointerleave','pointercancel'].forEach(function(ev){ minus.addEventListener(ev, function(){ clearTimeout(holdT); }); });
+  minus.addEventListener('click', function(e){ e.stopPropagation(); if(held){ held=false; return; } setCount(admitted-1); });
+  minus.addEventListener('contextmenu', function(e){ e.preventDefault(); });
 
   // --- Scan ---
   var TICK='<circle cx="50" cy="50" r="46" fill="#fff"/><path d="M28 52 L44 67 L73 35" fill="none" stroke="#16964A" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>';
@@ -164,22 +258,23 @@ body.busy #laser{animation-duration:.22s}
 
   function scan(ok){
     if(busy) return; busy=true; body.classList.add('busy');
+    if(!audioOk()) startAudio();   // a scan tap is a gesture too: use it to revive the sound
     setTimeout(function(){
       body.classList.remove('busy');
       result.className='on '+(ok?'ok':'bad');
       icon.innerHTML=ok?TICK:CROSS;
       big.textContent=ok?'Approved':'Denied';
       small.textContent=ok?pick(OK_LINES):pick(BAD_LINES);
-      if(ok){ beepOk(); vibrate(80); admitted++; try{ localStorage.setItem('door-admitted', String(admitted)); }catch(_){} showCount(); }
+      if(ok){ beepOk(); vibrate(80); setCount(admitted+1); }
       else { beepBad(); vibrate([120,80,120,80,120]); }
       setTimeout(function(){ result.className=''; busy=false; }, ok?1700:1900);
     }, 450 + Math.random()*350);
   }
 
-  document.getElementById('deny').addEventListener('pointerdown', function(e){ e.stopPropagation(); e.preventDefault(); scan(false); });
+  function isControl(el){ return el && el.closest && el.closest('#tally,#refresh,#wake,#start,#deny'); }
+  document.getElementById('deny').addEventListener('pointerdown', function(e){ e.stopPropagation(); e.preventDefault(); if(started && wake.hidden) scan(false); });
   document.addEventListener('pointerdown', function(e){
-    if(!started) return;
-    if(e.target.id==='deny') return;
+    if(!started || !wake.hidden || isControl(e.target)) return;
     scan(true);
   });
 })();
