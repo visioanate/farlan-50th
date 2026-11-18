@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Door Scanner</title>
+<meta name="theme-color" content="#0b1322">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Door Scanner">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600&display=swap">
+<style>
+/* Door scanner for the 50th Anniversary Tour.
+   Pretend scanner: the camera feed and laser are for show; the operator's tap decides.
+   Tap anywhere = approved. Tap the hidden top-left corner = denied (for jokes). */
+:root{
+  --ink:#0b1322; --navy:#132038; --cream:#F6ECD4; --orange:#D9582B;
+  --ok:#1FB45A; --bad:#D2302B;
+  --head:'Anton', Impact, 'Arial Narrow Bold', sans-serif;
+  --body:'Oswald', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0; height:100%; background:var(--ink); color:var(--cream); font-family:var(--body);
+  overflow:hidden; overscroll-behavior:none; -webkit-user-select:none; user-select:none; touch-action:manipulation}
+
+#cam{position:fixed; inset:0; width:100%; height:100%; object-fit:cover; background:#000}
+/* Fallback backdrop when the camera isn't available */
+#noise{position:fixed; inset:0; background:
+  radial-gradient(ellipse at 50% 45%, #1d2c4a 0%, #0b1322 70%);}
+
+/* Darkened surround with a clear scanning window */
+#frame{position:fixed; left:50%; top:46%; transform:translate(-50%,-50%);
+  width:min(82vw, 560px); aspect-ratio:1.6/1; border-radius:18px;
+  box-shadow:0 0 0 200vmax rgba(5,10,20,.62); pointer-events:none}
+#frame::before,#frame::after,#frame i::before,#frame i::after{content:""; position:absolute; width:38px; height:38px;
+  border:5px solid var(--orange)}
+#frame::before{left:-3px; top:-3px; border-right:0; border-bottom:0; border-top-left-radius:18px}
+#frame::after{right:-3px; top:-3px; border-left:0; border-bottom:0; border-top-right-radius:18px}
+#frame i::before{left:-3px; bottom:-3px; border-right:0; border-top:0; border-bottom-left-radius:18px}
+#frame i::after{right:-3px; bottom:-3px; border-left:0; border-top:0; border-bottom-right-radius:18px}
+#laser{position:absolute; left:4%; right:4%; height:3px; top:50%; background:#ff2a2a;
+  box-shadow:0 0 12px 3px rgba(255,40,40,.75); border-radius:2px; animation:sweep 1.8s ease-in-out infinite alternate}
+@keyframes sweep{from{top:10%} to{top:90%}}
+body.busy #laser{animation-duration:.22s}
+
+#top{position:fixed; left:0; right:0; top:0; padding:calc(env(safe-area-inset-top) + 14px) 20px 0;
+  text-align:center; pointer-events:none}
+#top .k{font:500 13px/1 var(--body); letter-spacing:.32em; color:var(--orange); text-transform:uppercase}
+#top .t{font:28px/1.1 var(--head); letter-spacing:.04em; margin-top:6px; text-transform:uppercase}
+#hint{position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom) + 22px); text-align:center;
+  font:500 17px/1.3 var(--body); letter-spacing:.14em; text-transform:uppercase; pointer-events:none; opacity:.9}
+#count{display:block; font:400 13px/1 var(--body); letter-spacing:.2em; opacity:.6; margin-top:8px}
+
+/* Result overlay */
+#result{position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding:24px; pointer-events:none; opacity:0; transition:opacity .12s}
+#result.on{opacity:1}
+#result.ok{background:rgba(22,150,74,.93)}
+#result.bad{background:rgba(190,36,32,.94)}
+#result .icon{width:min(38vw,190px); height:min(38vw,190px)}
+#result .big{font:min(16vw,110px)/1 var(--head); letter-spacing:.03em; text-transform:uppercase; margin-top:18px; color:#fff}
+#result .small{font:500 min(5.2vw,26px)/1.3 var(--body); letter-spacing:.16em; text-transform:uppercase; margin-top:12px; color:#fff; opacity:.95}
+#result.on .icon{animation:pop .28s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.4)} to{transform:scale(1)}}
+
+/* Start screen */
+#start{position:fixed; inset:0; z-index:5; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:18px; padding:32px; text-align:center; background:var(--navy)}
+#start .k{font:500 14px/1 var(--body); letter-spacing:.34em; color:var(--orange); text-transform:uppercase}
+#start h1{margin:0; font:min(13vw,72px)/1 var(--head); text-transform:uppercase; letter-spacing:.02em}
+#start p{margin:0; max-width:420px; font:400 16px/1.45 var(--body); opacity:.8}
+#go{margin-top:10px; appearance:none; border:0; border-radius:999px; background:var(--orange); color:#fff;
+  font:22px/1 var(--head); letter-spacing:.08em; text-transform:uppercase; padding:20px 44px; cursor:pointer}
+#go:active{transform:scale(.97)}
+#note{font:400 13px/1.4 var(--body); opacity:.55; max-width:380px}
+
+/* Hidden "denied" corner (no visual) */
+#deny{position:fixed; left:0; top:0; width:90px; height:calc(env(safe-area-inset-top) + 90px); z-index:3}
+</style>
+</head>
+<body>
+<video id="cam" playsinline muted autoplay></video>
+<div id="noise" hidden></div>
+<div id="frame"><i></i><div id="laser"></div></div>
+<div id="top"><div class="k">Door crew &middot; One night only</div><div class="t">The 50th Anniversary Tour</div></div>
+<div id="hint">Hold the tour pass in the frame<span id="count"></span></div>
+
+<div id="result"><svg class="icon" viewBox="0 0 100 100" aria-hidden="true"></svg><div class="big"></div><div class="small"></div></div>
+<div id="deny" aria-hidden="true"></div>
+
+<div id="start">
+  <div class="k">Door crew only</div>
+  <h1>Ticket<br>Scanner</h1>
+  <p>Point the camera at a guest's tour pass. Tap anywhere on the screen to scan it.</p>
+  <button id="go" type="button">Start scanning</button>
+  <div id="note">Allow the camera when asked. On iPhone, make sure the silent switch is off so you hear the beep.</div>
+</div>
+
+<script>
+(function(){
+  var body=document.body, video=document.getElementById('cam'), noise=document.getElementById('noise');
+  var result=document.getElementById('result'), icon=result.querySelector('.icon');
+  var big=result.querySelector('.big'), small=result.querySelector('.small');
+  var countEl=document.getElementById('count');
+  var ac=null, busy=false, admitted=0, wakeLock=null, started=false;
+
+  var OK_LINES=['Enjoy the show','Welcome to the tour','Access all areas','Front row, please','Rock on'];
+  var BAD_LINES=['Ticket not recognised','Please try again','Already scanned?','Nice try'];
+
+  try{ admitted=parseInt(localStorage.getItem('door-admitted')||'0',10)||0; }catch(_){}
+  function showCount(){ countEl.textContent=admitted? admitted+' through the door' : ''; }
+  showCount();
+
+  // --- Sound (Web Audio; must be unlocked by the Start tap) ---
+  function tone(freq, start, dur, type, vol){
+    var o=ac.createOscillator(), g=ac.createGain();
+    o.type=type||'square'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.0001, ac.currentTime+start);
+    g.gain.exponentialRampToValueAtTime(vol||0.35, ac.currentTime+start+0.008);
+    g.gain.setValueAtTime(vol||0.35, ac.currentTime+start+dur-0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+start+dur);
+    o.connect(g); g.connect(ac.destination); o.start(ac.currentTime+start); o.stop(ac.currentTime+start+dur+0.02);
+  }
+  function beepOk(){ if(!ac) return; tone(1760,0,0.11,'square',0.3); tone(2350,0.13,0.18,'square',0.3); }
+  function beepBad(){ if(!ac) return; for(var i=0;i<3;i++) tone(190,i*0.2,0.15,'sawtooth',0.4); }
+
+  function vibrate(p){ try{ navigator.vibrate&&navigator.vibrate(p); }catch(_){} }
+
+  // --- Camera ---
+  function startCamera(){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ noise.hidden=false; return Promise.resolve(); }
+    return navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}, audio:false})
+      .then(function(s){ video.srcObject=s; return video.play().catch(function(){}); })
+      .catch(function(){ noise.hidden=false; });
+  }
+  function keepAwake(){
+    try{ if(navigator.wakeLock&&navigator.wakeLock.request){
+      navigator.wakeLock.request('screen').then(function(l){ wakeLock=l; }).catch(function(){});
+    } }catch(_){}
+  }
+  document.addEventListener('visibilitychange', function(){
+    if(document.visibilityState==='visible'&&started){ keepAwake();
+      if(video.srcObject&&video.paused) video.play().catch(function(){}); }
+  });
+
+  document.getElementById('go').addEventListener('click', function(){
+    try{ ac=new (window.AudioContext||window.webkitAudioContext)(); ac.resume&&ac.resume();
+      tone(1,0,0.02,'sine',0.0002); }catch(_){ ac=null; }
+    var s=document.getElementById('start'); s.parentNode.removeChild(s); started=true;
+    startCamera(); keepAwake();
+  });
+
+  // --- Scan ---
+  var TICK='<circle cx="50" cy="50" r="46" fill="#fff"/><path d="M28 52 L44 67 L73 35" fill="none" stroke="#16964A" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>';
+  var CROSS='<circle cx="50" cy="50" r="46" fill="#fff"/><path d="M33 33 L67 67 M67 33 L33 67" fill="none" stroke="#BE2420" stroke-width="10" stroke-linecap="round"/>';
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  function scan(ok){
+    if(busy) return; busy=true; body.classList.add('busy');
+    setTimeout(function(){
+      body.classList.remove('busy');
+      result.className='on '+(ok?'ok':'bad');
+      icon.innerHTML=ok?TICK:CROSS;
+      big.textContent=ok?'Approved':'Denied';
+      small.textContent=ok?pick(OK_LINES):pick(BAD_LINES);
+      if(ok){ beepOk(); vibrate(80); admitted++; try{ localStorage.setItem('door-admitted', String(admitted)); }catch(_){} showCount(); }
+      else { beepBad(); vibrate([120,80,120,80,120]); }
+      setTimeout(function(){ result.className=''; busy=false; }, ok?1700:1900);
+    }, 450 + Math.random()*350);
+  }
+
+  document.getElementById('deny').addEventListener('pointerdown', function(e){ e.stopPropagation(); e.preventDefault(); scan(false); });
+  document.addEventListener('pointerdown', function(e){
+    if(!started) return;
+    if(e.target.id==='deny') return;
+    scan(true);
+  });
+})();
+</script>
+</body>
+</html>
